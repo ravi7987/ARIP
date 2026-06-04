@@ -1,0 +1,59 @@
+fastapi[standard]
+pyjwt
+pwdlib[argon2]
+greenlet
+
+# Postgres async driver
+sqlalchemy>=2.0.0
+asyncpg>=0.29.0
+psycopg2-binary~=2.9.0
+ 
+# Redis async client
+redis[asyncio]>=5.0.0
+ 
+# Migrations
+alembic>=1.13.0
+
+# -----------------------------------------------------------------------------
+# Database — PostgreSQL (async)
+# -----------------------------------------------------------------------------
+sqlalchemy~=2.0.0         # ORM + query builder. v2 introduces the new
+                          # Mapped[T] + mapped_column() typed syntax and
+                          # full async support. This is what you need.
+asyncpg~=0.29.0           # The async PostgreSQL driver that SQLAlchemy uses
+                          # under the hood when your URL starts with
+                          # postgresql+asyncpg://
+                          # Without this, create_async_engine will raise:
+                          # "Could not load backend 'asyncpg'"
+alembic~=1.13.0           # Database migration tool. Reads your SQLAlchemy
+                          # models and generates versioned migration scripts.
+                          # Works alongside SQLAlchemy, not a replacement.
+
+
+# -----------------------------------------------------------------------------
+# Authentication & security
+# -----------------------------------------------------------------------------
+python-jose[cryptography]~=3.3.0
+                          # JWT encode/decode. [cryptography] backend is
+                          # required for RS256 (asymmetric keys). Even if
+                          # you start with HS256, include it — switching
+                          # algorithms later is painful without it.
+passlib[bcrypt]~=1.7.4    # Password hashing. [bcrypt] installs the bcrypt
+                          # backend. NEVER use MD5/SHA for passwords.
+                          # bcrypt is slow by design — that's the point.
+python-multipart~=0.0.9   # Required by FastAPI's OAuth2PasswordRequestForm.
+                          # Without this, form-based login raises a 422 with
+                          # a confusing "field required" error.
+
+# -----------------------------------------------------------------------------
+# Development & testing (move to a [dev] group in pyproject.toml)
+# -----------------------------------------------------------------------------
+pytest~=8.2.0
+pytest-asyncio~=0.23.0    # Async test support. Needed for testing async
+                          # route handlers and services with pytest.
+pytest-cov~=5.0.0         # Coverage reports.
+ruff~=0.4.0               # Linter + formatter. Replaces flake8 + isort
+                          # + black in one fast tool.
+
+ 
+
