@@ -6,15 +6,15 @@ from collections.abc import AsyncGenerator
 from app.core.config import get_settings
 from app.db.sessions import engine
 from app.db.redis import close_redis_pool, get_redis_pool
+from app.db.qdrant import close_qdrant_client, get_qdrant_client_instance
 
 settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # ── STARTUP ──────────────────────────────────────────────────
-    # Initialise the Redis pool eagerly so the first request isn't
-    # penalised with pool creation latency.
     get_redis_pool()
+    get_qdrant_client_instance()
 
     async with engine.connect() as conn:
         await conn.execute(__import__("sqlalchemy").text("SELECT 1"))
@@ -22,8 +22,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield  # ← application runs here
  
     # ── SHUTDOWN ─────────────────────────────────────────────────
-    await engine.dispose() 
+    await engine.dispose()
     await close_redis_pool()
+    await close_qdrant_client()
 
  
 def create_app() -> FastAPI:

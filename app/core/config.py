@@ -20,9 +20,9 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_MAX_CONNECTIONS: int = 20
 
-    # ARIP settings — add to your existing Settings class
-    # QDRANT_URL: str = ""
-    # QDRANT_API_KEY: str = ""
+    # ARIP settings
+    QDRANT_URL: str = "http://localhost:6333"
+    QDRANT_API_KEY: str = ""          # empty = no auth (local dev)
     # LLAMA_CLOUD_API_KEY: str = ""
     # OPENAI_API_KEY: str = ""
     # LANGFUSE_SECRET_KEY: str = ""
