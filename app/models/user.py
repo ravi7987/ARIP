@@ -2,11 +2,15 @@
 
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, String, Text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.analysis_result import AnalysisResult
 
 
 class User(Base, TimestampMixin):
@@ -65,6 +69,13 @@ class User(Base, TimestampMixin):
         default=False,
         nullable=False,
         comment="True once email verification is complete.",
+    )
+
+    analysis_results: Mapped[list["AnalysisResult"]] = relationship(
+        "AnalysisResult",
+        back_populates="user",
+        lazy="select",
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self) -> str:

@@ -20,6 +20,17 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_MAX_CONNECTIONS: int = 20
 
+    # ARIP settings — add to your existing Settings class
+    # QDRANT_URL: str = ""
+    # QDRANT_API_KEY: str = ""
+    # LLAMA_CLOUD_API_KEY: str = ""
+    # OPENAI_API_KEY: str = ""
+    # LANGFUSE_SECRET_KEY: str = ""
+    # LANGFUSE_PUBLIC_KEY: str = ""
+    # COHERE_API_KEY: str = ""
+    # ARIP_MAX_RETRIES: int = 5
+    # ARIP_FAITHFULNESS_THRESHOLD: float = 0.7
+
 
     model_config = SettingsConfigDict(
         env_file=ENV_FILE,

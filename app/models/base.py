@@ -9,6 +9,16 @@ from datetime import datetime, timezone
 from sqlalchemy import DateTime, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+class JobPostingStatus:
+    PENDING = "pending"
+    INDEXED = "indexed"
+    FAILED = "failed"
+
+class AnalysisStatus:
+    PENDING = "pending"
+    COMPLETED = "completed"
+    DEGRADED = "degraded"    # circuit breaker fired
+    FAILED = "failed"  
 
 class Base(DeclarativeBase):
     pass

@@ -41,6 +41,8 @@ sys.path.insert(0, os.getcwd())  # ensures `app` is importable from project root
 
 from app.db.sessions import Base          # noqa: E402
 from app.models.user import User         # noqa: F401
+from app.models.analysis_result import AnalysisResult  # noqa: F401
+from app.models.job_postings import JobPosting          # noqa: F401
 
 target_metadata = Base.metadata
 

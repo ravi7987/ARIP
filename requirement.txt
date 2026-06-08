@@ -55,5 +55,18 @@ pytest-cov~=5.0.0         # Coverage reports.
 ruff~=0.4.0               # Linter + formatter. Replaces flake8 + isort
                           # + black in one fast tool.
 
+llama-index
+llama-parse
+qdrant-client
+langchain
+langgraph
+ragas
+deepeval
+langfuse
+cohere
+trafilatura
+beautifulsoup4
+fastembed
+
  
 
