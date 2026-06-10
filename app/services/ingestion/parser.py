@@ -1,8 +1,12 @@
 import asyncio
 import hashlib
 import logging
+import re
 from typing import Final
+
 import httpx
+import trafilatura
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +68,20 @@ _RETRYABLE_STATUS_CODES: Final[frozenset[int]] = frozenset({
 # Protects the pipeline from accidentally ingesting a huge binary response
 # that slipped past Content-Type checks.
 _MAX_RESPONSE_BYTES: Final[int] = 10 * 1024 * 1024
+
+# Minimum character count accepted from strip_boilerplate.
+# A real job posting is never shorter than this; anything less is a
+# JS-rendered shell, a CAPTCHA page, or a bot-detection stub.
+_MIN_CONTENT_CHARS: Final[int] = 200
+
+# Structural tags that never contain job posting content.
+# Decomposed by the BeautifulSoup fallback before text extraction so that
+# navigation links, cookie banners, and form labels don't pollute the output.
+_BS4_BOILERPLATE_TAGS: Final[frozenset[str]] = frozenset({
+    "script", "style", "noscript",
+    "nav", "header", "footer", "aside",
+    "form", "figure", "iframe", "svg",
+})
 
 class FetchError(Exception):
     """Base class for all fetch_url failures.
@@ -218,13 +236,75 @@ def _validate_response(response: httpx.Response, url: str) -> None:
     
 def compute_url_hash(url: str) -> str:
     """Compute a stable SHA-256 hash of the URL for deduplication fast-path.
-    
     Placed here because the URL is normalised by the time fetch_url runs
     (after redirect resolution). Using the final URL — not the submitted URL
     — means two different input URLs that redirect to the same page will
     correctly hash to the same value.
-    
     Returns:
         64-character lowercase hex string.
     """
     return hashlib.sha256(url.encode("utf-8")).hexdigest()
+
+
+# ---------------------------------------------------------------------------
+# Content extraction
+# ---------------------------------------------------------------------------
+
+def strip_boilerplate(html: str) -> str:
+    """Extract the main text body from raw HTML, discarding navigation, ads,
+    and other boilerplate.
+    Strategy:
+      1. Trafilatura — ML-based extractor trained on web pages. Handles most
+         standard ATS platforms (Greenhouse, Lever, Workable) accurately.
+      2. BeautifulSoup fallback — structural tag removal for pages where
+         Trafilatura returns nothing (JS-rendered shells, unusual layouts).
+    Args:
+        html: Raw HTML string as returned by fetch_url().
+    Returns:
+        Plain text of the job posting body. Whitespace is normalised.
+    """
+    # --- 1. Trafilatura ---
+    text = trafilatura.extract(
+        html,
+        include_comments=False,  # public comment sections are noise
+        include_tables=True,     # salary bands, benefits grids
+        include_formatting=False,
+        favor_recall=True,       # capture more; precision matters less for embedding
+        deduplicate=False,
+    )
+    if text and len(text.strip()) >= _MIN_CONTENT_CHARS:
+        return _collapse_whitespace(text)
+
+    logger.debug(
+        "Trafilatura returned %d chars — falling back to BeautifulSoup",
+        len(text.strip()) if text else 0,
+    )
+
+    # --- 2. BeautifulSoup fallback ---
+    text = _bs4_extract(html)
+    if len(text) >= _MIN_CONTENT_CHARS:
+        return text
+
+    raise FetchContentError(
+        f"strip_boilerplate: both extractors returned fewer than "
+        f"{_MIN_CONTENT_CHARS} characters ({len(text)} extracted) "
+        "— page may be a JS shell, CAPTCHA, or bot-detection stub"
+    )
+
+
+def _bs4_extract(html: str) -> str:
+    """Remove structural boilerplate tags then return all remaining text."""
+    soup = BeautifulSoup(html, "lxml")
+    for tag in soup.find_all(_BS4_BOILERPLATE_TAGS):
+        tag.decompose()
+    return _collapse_whitespace(soup.get_text(separator="\n"))
+
+
+def _collapse_whitespace(text: str) -> str:
+    """Normalise whitespace for consistent downstream tokenisation.
+    - Collapses 3+ consecutive newlines to one blank line.
+    - Collapses tabs and multiple spaces within a line to a single space.
+    """
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = re.sub(r"[ \t]+", " ", text)
+    return text.strip()

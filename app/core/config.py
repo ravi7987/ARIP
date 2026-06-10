@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     # ARIP settings
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_API_KEY: str = ""          # empty = no auth (local dev)
-    # LLAMA_CLOUD_API_KEY: str = ""
+    LLAMA_CLOUD_API_KEY: str = ""
     # OPENAI_API_KEY: str = ""
     # LANGFUSE_SECRET_KEY: str = ""
     # LANGFUSE_PUBLIC_KEY: str = ""
