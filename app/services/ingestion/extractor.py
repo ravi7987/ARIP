@@ -1,10 +1,11 @@
+import json
 import logging
 from typing import Any, Final
 
 from llama_parse import LlamaParse, ResultType
 
 from app.core.config import get_settings
-from app.schemas.job_posting import JobPostingSchema
+from app.schemas.arip import JobPostingSchema
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +104,7 @@ async def extract_structure(raw_text: str) -> JobPostingSchema:
         api_key=settings.LLAMA_CLOUD_API_KEY,
         result_type=ResultType.JSON,
         structured_output=True,
-        structured_output_json_schema=_EXTRACTION_SCHEMA,
+        structured_output_json_schema=json.dumps(_EXTRACTION_SCHEMA),
         structured_output_json_schema_name="JobPostingSchema",
         parsing_instruction=_PARSING_INSTRUCTION,
         language="en",
