@@ -121,7 +121,9 @@ async def extract_structure(raw_text: str) -> JobPostingSchema:
         "Sending %d chars to LlamaParse for structured extraction", len(raw_text)
     )
 
-    json_results: list[dict] = await parser.aget_json(encoded)
+    json_results: list[dict] = await parser.aget_json(
+        encoded, extra_info={"file_name": "job_posting.txt"}
+    )
 
     if not json_results:
         raise ExtractionError("LlamaParse returned an empty result list.")

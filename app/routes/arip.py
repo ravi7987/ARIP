@@ -6,6 +6,7 @@ from app.dependencies.auth import CurrentUser, DbSession
 from app.schemas.arip import IngestRequest, IngestResponse
 from app.services.ingestion.extractor import ExtractionError
 from app.services.ingestion.parser import (
+    FetchBlockedError,
     FetchContentError,
     FetchHTTPError,
     FetchNetworkError,
@@ -56,6 +57,11 @@ def _raise_http_for(exc: Exception, url: str) -> NoReturn:
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Could not reach the job posting URL — check the address and try again.",
         )
+    if isinstance(exc, FetchBlockedError):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        )
     if isinstance(exc, (FetchContentError, ExtractionError)):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -92,6 +98,7 @@ async def ingest_job_posting(
         FetchTimeoutError,
         FetchHTTPError,
         FetchNetworkError,
+        FetchBlockedError,
         FetchContentError,
         ExtractionError,
     ) as exc:

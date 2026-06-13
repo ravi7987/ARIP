@@ -36,7 +36,7 @@ class IngestionService:
             ExtractionError: LlamaParse returned an unusable response.
         """
         dedup_hash = compute_url_hash(url)
-
+        
         existing = await self._find_by_hash(dedup_hash)
         if existing is not None:
             logger.info("Duplicate URL detected — hash=%s url=%s", dedup_hash, url)
@@ -48,10 +48,13 @@ class IngestionService:
                 title=existing.title,
                 company=existing.company,
             )
-
+        
         html = await fetch_url(url)
+        
         raw_text = strip_boilerplate(html)
+        print("Fetched HTML: %s", raw_text)
         parsed: JobPostingSchema = await extract_structure(raw_text)
+        logger.debug("Parsed fields: title=%r company=%r data=%r", parsed.title, parsed.company, parsed)
 
         posting = JobPosting(
             url=url,
