@@ -2,6 +2,9 @@ from typing import Annotated, NoReturn
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
+from qdrant_client import AsyncQdrantClient
+
+from app.db.qdrant import get_qdrant_client
 from app.dependencies.auth import CurrentUser, DbSession
 from app.schemas.arip import IngestRequest, IngestResponse
 from app.services.ingestion.extractor import ExtractionError
@@ -21,8 +24,11 @@ router = APIRouter(prefix="/arip", tags=["ARIP"])
 # Service factory
 # ---------------------------------------------------------------------------
 
-def get_ingestion_service(db: DbSession) -> IngestionService:
-    return IngestionService(db=db)
+def get_ingestion_service(
+    db: DbSession,
+    qdrant: Annotated[AsyncQdrantClient, Depends(get_qdrant_client)],
+) -> IngestionService:
+    return IngestionService(db=db, qdrant=qdrant)
 
 
 IngestionServiceDep = Annotated[IngestionService, Depends(get_ingestion_service)]

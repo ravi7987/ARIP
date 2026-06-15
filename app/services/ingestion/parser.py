@@ -396,6 +396,26 @@ def compute_url_hash(url: str) -> str:
     return hashlib.sha256(url.encode("utf-8")).hexdigest()
 
 
+def compute_dedup_hash(text: str) -> str:
+    """Compute a SHA-256 hash of normalised text for content-based deduplication.
+
+    Normalisation makes the hash invariant to formatting noise that varies
+    between re-posts of the same job (extra whitespace, case differences):
+      - Lowercase the entire string.
+      - Collapse any run of whitespace (spaces, tabs, newlines) to a single space.
+      - Strip leading / trailing whitespace.
+
+    Used as a fast-path check after strip_boilerplate() and before the
+    expensive LlamaParse call — the same job reposted at a different URL
+    produces the same hash and can be short-circuited immediately.
+
+    Returns:
+        64-character lowercase hex string.
+    """
+    normalised = re.sub(r"\s+", " ", text).strip().lower()
+    return hashlib.sha256(normalised.encode("utf-8")).hexdigest()
+
+
 # ---------------------------------------------------------------------------
 # Content extraction
 # ---------------------------------------------------------------------------
